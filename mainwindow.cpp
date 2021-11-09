@@ -35,7 +35,7 @@ void MainWindow::setupUI()
     menubar->setObjectName(QString::fromUtf8("menubar"));
     menubar->setGeometry(QRect(0, 0, 799, 22));
     auto fileMenu = menubar->addMenu("File");
-    auto render = fileMenu->addAction("Render Image", [this](){openGLWidget->saveImage("/home/orion/render.png");});
+    auto render = fileMenu->addAction("Render Image", [this](){openGLWidget->saveImage("render.png");});
     render->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
     auto quit = fileMenu->addAction("Quit",[this](){close();});
     quit->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));

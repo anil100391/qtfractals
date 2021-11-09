@@ -49,4 +49,8 @@ else()
     endif()
 endif()
 
+# copy shaders to binary directory
+configure_file("vert.shader" "vert.shader" COPYONLY)
+configure_file("frag.shader" "frag.shader" COPYONLY)
+
 target_link_libraries(fractals PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)

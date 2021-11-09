@@ -69,12 +69,12 @@ void FractalGLWidget::initializeGL()
     m_shaderProgram.bind();
     m_shaderProgram.enableAttributeArray(0);
     m_shaderProgram.setAttributeBuffer( 0, GL_FLOAT, 0, 2 );
-    if ( !m_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, "/home/orion/fractals/fractals/vert.shader") )
+    if ( !m_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, "vert.shader") )
     {
         QString log = m_shaderProgram.log();
     }
 
-    if ( !m_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, "/home/orion/fractals/fractals/frag.shader") )
+    if ( !m_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, "frag.shader") )
     {
         QString log = m_shaderProgram.log();
     }
