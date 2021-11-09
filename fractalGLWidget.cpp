@@ -6,6 +6,7 @@
 #include <QCursor>
 #include <QFileDialog>
 #include <QWheelEvent>
+#include <QMouseEvent>
 
 #include <QOpenGLFunctions>
 #include <QOpenGLVertexArrayObject>
@@ -35,6 +36,14 @@ FractalGLWidget::~FractalGLWidget()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+void FractalGLWidget::resetBounds()
+{
+    m_spanY = 3.0f;
+    m_center = QVector2D(0.0f, 0.0f);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 bool FractalGLWidget::saveImage(const QString &file)
 {
     QImage img = grabFramebuffer();
@@ -50,6 +59,40 @@ void FractalGLWidget::wheelEvent(QWheelEvent *event)
     QOpenGLWidget::wheelEvent(event);
     zoom(event->angleDelta().y() >= 0);
     update();
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void FractalGLWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    QOpenGLWidget::mouseMoveEvent(event);
+
+    auto pos = event->pos();
+    auto buttons = event->buttons();
+    if ( (buttons & (Qt::LeftButton | Qt::MiddleButton | Qt::RightButton)) != 0 )
+    {
+        // panning
+        float xposRel = (1.0 * pos.x()) / width();
+        float yposRel = (1.0 * (height() - pos.y())) / height();
+
+        float spanX = (m_spanY * width()) / height();
+        QVector2D toCenter((0.5 - xposRel) * spanX, (0.5 - yposRel) * m_spanY);
+
+        m_center = m_grabbedForPan + toCenter;
+    }
+
+    auto c = coord(pos.x(), pos.y());
+    m_mainWindow->postMessage(QString::number(c.x()) +", " + QString::number(c.y()));
+    update();
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void FractalGLWidget::mousePressEvent(QMouseEvent *event)
+{
+    QOpenGLWidget::mousePressEvent(event);
+    QPoint pos = event->pos();
+    m_grabbedForPan = coord(pos.x(), height() - pos.y());
 }
 
 // -----------------------------------------------------------------------------
@@ -137,6 +180,16 @@ QVector2D FractalGLWidget::maxCoord() const
 {
     float spanX = (m_spanY * width()) / height();
     return m_center + QVector2D(0.5 * spanX, 0.5 * m_spanY);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+QVector2D FractalGLWidget::coord(int x, int y) const
+{
+    auto minc = minCoord();
+    float spanX = (width() * m_spanY) / height();
+    return { minc.x() + (spanX * x / width()),
+             minc.y() + (m_spanY * y)/height() };
 }
 
 // -----------------------------------------------------------------------------

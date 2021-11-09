@@ -51,8 +51,11 @@ void MainWindow::setupUI()
 
     auto viewMenu = menubar->addMenu("View");
     auto grids = viewMenu->addAction("Show Grid", [this](bool flag){openGLWidget->showGrid(flag); openGLWidget->update();});
+    grids->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
     grids->setChecked(true);
     grids->setCheckable(true);
+    auto reset = viewMenu->addAction("Reset Bounds", [this](){openGLWidget->resetBounds(); openGLWidget->update();});
+    reset->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
 
     auto fracMenu = menubar->addMenu("Fractal");
     fracMenu->addAction("Julia", [this](){openGLWidget->setMode(0); openGLWidget->update();});
