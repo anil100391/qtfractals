@@ -81,7 +81,7 @@ void FractalGLWidget::mouseMoveEvent(QMouseEvent *event)
         m_center = m_grabbedForPan + toCenter;
     }
 
-    auto c = coord(pos.x(), pos.y());
+    auto c = coord(pos.x(), height() - pos.y());
     m_mainWindow->postMessage(QString::number(c.x()) +", " + QString::number(c.y()));
     update();
 }

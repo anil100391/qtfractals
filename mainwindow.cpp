@@ -32,11 +32,9 @@ void MainWindow::setupUI()
     if (objectName().isEmpty())
         setObjectName(QString::fromUtf8("MainWindow"));
     resize(1200, 800 );
-    QVBoxLayout *layout = new QVBoxLayout();
-    setLayout(layout);
     openGLWidget = new FractalGLWidget(this);
     openGLWidget->setObjectName(QString::fromUtf8("openGLWidget"));
-    layout->addWidget(openGLWidget);
+    setCentralWidget(openGLWidget);
     openGLWidget->resize(width(), height());
 
     menubar = new QMenuBar(this);
@@ -66,6 +64,8 @@ void MainWindow::setupUI()
     statusbar = new QStatusBar(this);
     statusbar->setObjectName(QString::fromUtf8("statusbar"));
     setStatusBar(statusbar);
+
+    openGLWidget->move(0, menubar->height());
     setWindowIcon(QIcon("julia.png"));
 }
 
@@ -95,5 +95,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
-    openGLWidget->resize(width(), height() - 20);
+    int w = width();
+    int h = height() - statusbar->height() - menubar->height();
+    openGLWidget->resize(w, h);
 }
