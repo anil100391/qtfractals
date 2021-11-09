@@ -35,7 +35,6 @@ void MainWindow::setupUI()
     openGLWidget = new FractalGLWidget(this);
     openGLWidget->setObjectName(QString::fromUtf8("openGLWidget"));
     setCentralWidget(openGLWidget);
-    openGLWidget->resize(width(), height());
 
     menubar = new QMenuBar(this);
     menubar->setObjectName(QString::fromUtf8("menubar"));
@@ -65,7 +64,6 @@ void MainWindow::setupUI()
     statusbar->setObjectName(QString::fromUtf8("statusbar"));
     setStatusBar(statusbar);
 
-    openGLWidget->move(0, menubar->height());
     setWindowIcon(QIcon("julia.png"));
 }
 
@@ -88,14 +86,4 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
     QMainWindow::mouseReleaseEvent(event);
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-void MainWindow::resizeEvent(QResizeEvent *event)
-{
-    QMainWindow::resizeEvent(event);
-    int w = width();
-    int h = height() - statusbar->height() - menubar->height();
-    openGLWidget->resize(w, h);
 }
