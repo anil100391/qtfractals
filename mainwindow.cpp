@@ -49,6 +49,7 @@ void MainWindow::setupUI()
     statusbar = new QStatusBar(this);
     statusbar->setObjectName(QString::fromUtf8("statusbar"));
     setStatusBar(statusbar);
+    setWindowIcon(QIcon("julia.png"));
 }
 
 // -----------------------------------------------------------------------------

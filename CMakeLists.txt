@@ -23,7 +23,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #endif()
 
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets OpenGLWidgets REQUIRED)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -52,5 +52,6 @@ endif()
 # copy shaders to binary directory
 configure_file("vert.shader" "vert.shader" COPYONLY)
 configure_file("frag.shader" "frag.shader" COPYONLY)
+configure_file("julia.png" "julia.png" COPYONLY)
 
-target_link_libraries(fractals PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(fractals PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::OpenGLWidgets)
