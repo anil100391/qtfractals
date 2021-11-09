@@ -233,6 +233,22 @@ vec4 newtonShader(vec2 texcoord)
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+float plot(float edge, float x)
+{
+    return smoothstep(edge-0.01, edge, x) - smoothstep(edge, edge+0.01, x);
+}
+
+// -----------------------------------------------------------------------------
+vec4 gridlinesShader(vec2 texcoord)
+{
+    vec2 fragcoord = getFragmentCoordinate(texcoord);
+    float e = round(fragcoord.x);
+    float f = round(fragcoord.y);
+    return vec4(vec2(clamp(max(plot(e, fragcoord.x), plot(f, fragcoord.y)), 0.0, 1.0)), 0.0, 1.0);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void main()
 {
     vec2 v_texCoord = vec2((1.0 * gl_FragCoord.x)/u_Width, (1.0 * gl_FragCoord.y)/u_Height);
@@ -243,5 +259,6 @@ void main()
     else
         color = newtonShader(v_texCoord);
 
-    // color = vec4(v_texCoord, 0.0, 1.0);
+    if ( u_Mode != 2 )
+        color = max(0.2 * gridlinesShader(v_texCoord), 0.9 * color);
 }

@@ -26,8 +26,6 @@ FractalGLWidget::FractalGLWidget(QWidget *parent)
 // -----------------------------------------------------------------------------
 FractalGLWidget::~FractalGLWidget()
 {
-    m_positionBuffer.destroy();
-    m_indexBuffer.destroy();
     delete m_vao;
 }
 
@@ -46,7 +44,8 @@ void FractalGLWidget::initializeGL()
 {
     // Set up the rendering context, load shaders and other resources, etc.:
     QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
-    f->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    f->glEnable(GL_BLEND);
+    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Create VAO for first object to render
     m_vao = new QOpenGLVertexArrayObject( this );
@@ -116,7 +115,7 @@ void FractalGLWidget::paintGL()
 {
     // Draw the scene:
     QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
-    f->glClearColor(1.0f, 0.7f, 1.0f, 1.0f);
+    f->glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     f->glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     // Bind shader program, textures for first set of objects
     m_shaderProgram.bind();
