@@ -9,7 +9,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    setupUI(this);
+    setupUI();
 }
 
 // -----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ MainWindow::~MainWindow()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void MainWindow::setupUI(QWidget *widget)
+void MainWindow::setupUI()
 {
     if (objectName().isEmpty())
         setObjectName(QString::fromUtf8("MainWindow"));
@@ -34,6 +34,15 @@ void MainWindow::setupUI(QWidget *widget)
     menubar = new QMenuBar(this);
     menubar->setObjectName(QString::fromUtf8("menubar"));
     menubar->setGeometry(QRect(0, 0, 799, 22));
+    auto fileMenu = menubar->addMenu("File");
+    fileMenu->addAction("Render Image", [this](){openGLWidget->saveImage("/home/orion/render.png");});
+    fileMenu->addAction("Quit",[this](){close();});
+
+    auto fracMenu = menubar->addMenu("Fractal");
+    fracMenu->addAction("Julia", [this](){openGLWidget->setMode(0); openGLWidget->update();});
+    fracMenu->addAction("Mandelbrot", [this](){openGLWidget->setMode(1); openGLWidget->update();});
+    fracMenu->addAction("Newton", [this](){openGLWidget->setMode(2); openGLWidget->update();});
+
     setMenuBar(menubar);
     statusbar = new QStatusBar(this);
     statusbar->setObjectName(QString::fromUtf8("statusbar"));

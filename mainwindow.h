@@ -27,7 +27,7 @@ protected:
 
 private:
 
-    void setupUI(QWidget *widget);
+    void setupUI();
 
     FractalGLWidget *openGLWidget = nullptr;
     QMenuBar        *menubar = nullptr;

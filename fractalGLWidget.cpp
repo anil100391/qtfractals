@@ -1,8 +1,9 @@
-#include "fractalGLWidget.h"
+﻿#include "fractalGLWidget.h"
 
 #include <cmath>
 
 #include <QCursor>
+#include <QFileDialog>
 
 #include <QOpenGLFunctions>
 #include <QOpenGLVertexArrayObject>
@@ -25,6 +26,18 @@ FractalGLWidget::FractalGLWidget(QWidget *parent)
 // -----------------------------------------------------------------------------
 FractalGLWidget::~FractalGLWidget()
 {
+    m_positionBuffer.destroy();
+    m_indexBuffer.destroy();
+    delete m_vao;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+bool FractalGLWidget::saveImage(const QString &file)
+{
+    QImage img = grabFramebuffer();
+    img.save(file);
+    return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -45,15 +58,7 @@ void FractalGLWidget::initializeGL()
     // remembered by the currently bound VAO
     m_positionBuffer.create();
     m_positionBuffer.setUsagePattern( QOpenGLBuffer::StaticDraw );
-    m_positionBuffer.bind();
-    float pad = 5.0f;
-    float positionData[] = { pad, pad,
-                             width() - pad, pad,
-                             width() - pad, height() - pad,
-                             pad, height() - pad
-                           };
-    int vertexCount = 4;
-    m_positionBuffer.allocate( positionData, vertexCount * 2 * sizeof( float ) );
+    allocatePositionBuffer(width(), height());
 
     m_indexBuffer.create();
     m_indexBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
@@ -82,7 +87,18 @@ void FractalGLWidget::initializeGL()
 // -----------------------------------------------------------------------------
 void FractalGLWidget::resizeGL(int w, int h)
 {
-    m_positionBuffer.release();
+    allocatePositionBuffer(w, h);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void FractalGLWidget::allocatePositionBuffer(int w, int h)
+{
+    if (w == -1)
+        w = width();
+    if (h == -1)
+        h = height();
+
     m_positionBuffer.bind();
     float pad = 5.0f;
     float positionData[] = { pad, pad,
@@ -115,7 +131,7 @@ void FractalGLWidget::paintGL()
     m_shaderProgram.setUniformValue("u_AspectRatio", 1.0f * width() / height());
     m_shaderProgram.setUniformValue("u_SpanY", 3.0f);
     m_shaderProgram.setUniformValue("u_Center", 0.0f, 0.0f);
-    m_shaderProgram.setUniformValue("u_Mode", 0);
+    m_shaderProgram.setUniformValue("u_Mode", m_mode);
     m_shaderProgram.setUniformValue("u_Width", width());
     m_shaderProgram.setUniformValue("u_Height", height());
     // Switch to the vertex data for first object and draw it

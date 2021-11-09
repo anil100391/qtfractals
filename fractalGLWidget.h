@@ -19,6 +19,9 @@ public:
     FractalGLWidget(QWidget *parent);
     ~FractalGLWidget();
 
+    void setMode(int mode) { m_mode = mode; }
+    bool saveImage(const QString &file);
+
 protected:
 
     void mouseMoveEvent(QMouseEvent *event) override
@@ -32,6 +35,9 @@ protected:
 
 private:
 
+    void allocatePositionBuffer(int w, int h);
+
+    int                       m_mode = 0;
     QOpenGLBuffer             m_positionBuffer;
     QOpenGLBuffer             m_indexBuffer;
     QOpenGLVertexArrayObject *m_vao = nullptr;
