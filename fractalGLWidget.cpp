@@ -1,9 +1,11 @@
 ﻿#include "fractalGLWidget.h"
+#include "mainwindow.h"
 
 #include <cmath>
 
 #include <QCursor>
 #include <QFileDialog>
+#include <QWheelEvent>
 
 #include <QOpenGLFunctions>
 #include <QOpenGLVertexArrayObject>
@@ -12,6 +14,7 @@
 // -----------------------------------------------------------------------------
 FractalGLWidget::FractalGLWidget(QWidget *parent)
     : QOpenGLWidget(parent),
+      m_mainWindow(static_cast<MainWindow *>(parent)),
       m_positionBuffer(QOpenGLBuffer::VertexBuffer),
       m_indexBuffer(QOpenGLBuffer::IndexBuffer)
 {
@@ -26,6 +29,7 @@ FractalGLWidget::FractalGLWidget(QWidget *parent)
 // -----------------------------------------------------------------------------
 FractalGLWidget::~FractalGLWidget()
 {
+    m_vao->release();
     delete m_vao;
 }
 
@@ -35,7 +39,17 @@ bool FractalGLWidget::saveImage(const QString &file)
 {
     QImage img = grabFramebuffer();
     img.save(file);
+    m_mainWindow->postMessage(file + " saved");
     return true;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void FractalGLWidget::wheelEvent(QWheelEvent *event)
+{
+    QOpenGLWidget::wheelEvent(event);
+    zoom(event->angleDelta().y() >= 0);
+    update();
 }
 
 // -----------------------------------------------------------------------------
@@ -111,6 +125,22 @@ void FractalGLWidget::allocatePositionBuffer(int w, int h)
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+QVector2D FractalGLWidget::minCoord() const
+{
+    float spanX = (m_spanY * width()) / height();
+    return m_center - QVector2D(0.5 * spanX, 0.5 * m_spanY);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+QVector2D FractalGLWidget::maxCoord() const
+{
+    float spanX = (m_spanY * width()) / height();
+    return m_center + QVector2D(0.5 * spanX, 0.5 * m_spanY);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void FractalGLWidget::paintGL()
 {
     // Draw the scene:
@@ -128,12 +158,22 @@ void FractalGLWidget::paintGL()
     m_shaderProgram.setUniformValue("u_MVP", mvp);
     m_shaderProgram.setUniformValue("u_C0", -3 + (4.0 * cpos.x())/width(), -1.5 + (3.0 * cpos.y())/height());
     m_shaderProgram.setUniformValue("u_AspectRatio", 1.0f * width() / height());
-    m_shaderProgram.setUniformValue("u_SpanY", 3.0f);
-    m_shaderProgram.setUniformValue("u_Center", 0.0f, 0.0f);
+    m_shaderProgram.setUniformValue("u_SpanY", m_spanY);
+    m_shaderProgram.setUniformValue("u_Center", m_center);
     m_shaderProgram.setUniformValue("u_Mode", m_mode);
     m_shaderProgram.setUniformValue("u_Width", width());
     m_shaderProgram.setUniformValue("u_Height", height());
+    m_shaderProgram.setUniformValue("u_ShowGrid", (m_showGrid && m_mode != 2) ? 1 : 0);
     // Switch to the vertex data for first object and draw it
     m_vao->bind();
     f->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void FractalGLWidget::zoom(bool inverted)
+{
+    // auto minc = minCoord();
+    int dir = inverted ? -1 : 1;
+    m_spanY = m_spanY + 0.1 * dir;
 }

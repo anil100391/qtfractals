@@ -18,6 +18,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void postMessage(const QString &message) const;
+
 protected:
 
     void mouseMoveEvent(QMouseEvent *event) override;

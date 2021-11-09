@@ -20,6 +20,13 @@ MainWindow::~MainWindow()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+void MainWindow::postMessage(const QString &message) const
+{
+    statusbar->showMessage(message);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 void MainWindow::setupUI()
 {
     if (objectName().isEmpty())
@@ -31,14 +38,21 @@ void MainWindow::setupUI()
     openGLWidget->setObjectName(QString::fromUtf8("openGLWidget"));
     layout->addWidget(openGLWidget);
     openGLWidget->resize(width(), height());
+
     menubar = new QMenuBar(this);
     menubar->setObjectName(QString::fromUtf8("menubar"));
     menubar->setGeometry(QRect(0, 0, 799, 22));
+
     auto fileMenu = menubar->addMenu("File");
     auto render = fileMenu->addAction("Render Image", [this](){openGLWidget->saveImage("render.png");});
-    render->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_P));
+    render->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_P));
     auto quit = fileMenu->addAction("Quit",[this](){close();});
-    quit->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
+    quit->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
+
+    auto viewMenu = menubar->addMenu("View");
+    auto grids = viewMenu->addAction("Show Grid", [this](bool flag){openGLWidget->showGrid(flag); openGLWidget->update();});
+    grids->setChecked(true);
+    grids->setCheckable(true);
 
     auto fracMenu = menubar->addMenu("Fractal");
     fracMenu->addAction("Julia", [this](){openGLWidget->setMode(0); openGLWidget->update();});
@@ -78,5 +92,5 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
-    openGLWidget->resize(width(), height());
+    openGLWidget->resize(width(), height() - 20);
 }

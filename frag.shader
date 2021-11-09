@@ -8,6 +8,7 @@ uniform vec2  u_Center;
 uniform int   u_Mode = 0;
 uniform int u_Width;
 uniform int u_Height;
+uniform int u_ShowGrid;
 // in vec2 v_texCoord;
 
 // -----------------------------------------------------------------------------
@@ -235,7 +236,8 @@ vec4 newtonShader(vec2 texcoord)
 // -----------------------------------------------------------------------------
 float plot(float edge, float x)
 {
-    return smoothstep(edge-0.01, edge, x) - smoothstep(edge, edge+0.01, x);
+    float delta = u_SpanY * 0.01 / 3.0;
+    return smoothstep(edge-delta, edge, x) - smoothstep(edge, edge+delta, x);
 }
 
 // -----------------------------------------------------------------------------
@@ -259,6 +261,6 @@ void main()
     else
         color = newtonShader(v_texCoord);
 
-    if ( u_Mode != 2 )
+    if ( u_ShowGrid != 0 )
         color = max(0.2 * gridlinesShader(v_texCoord), 0.9 * color);
 }
