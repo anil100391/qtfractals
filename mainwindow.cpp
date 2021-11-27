@@ -51,8 +51,10 @@ void MainWindow::setupUI()
     grids->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
     grids->setCheckable(true);
     grids->setChecked(true);
-    auto reset = viewMenu->addAction("Reset Bounds", [this](){openGLWidget->resetBounds(); openGLWidget->update();});
-    reset->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_R));
+    viewMenu->addAction( QIcon("/home/orion/code/qtfractals/resource/reset.svg"),
+                         "Reset Bounds",
+                         [this](){openGLWidget->resetBounds(); openGLWidget->update();},
+                         QKeySequence(Qt::CTRL | Qt::Key_R) );
 
     auto fracMenu = menubar->addMenu("Fractal");
     fracMenu->addAction("Julia", [this](){openGLWidget->setMode(0); openGLWidget->update();});
