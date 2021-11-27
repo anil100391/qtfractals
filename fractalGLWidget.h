@@ -23,7 +23,7 @@ public:
     void setMode(int mode) { m_mode = mode; }
     void showGrid(bool flag) { m_showGrid = flag; }
     void resetBounds();
-    bool saveImage(const QString &file);
+    bool saveImage();
 
 protected:
 

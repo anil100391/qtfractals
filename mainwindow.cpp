@@ -41,17 +41,25 @@ void MainWindow::setupUI()
     menubar->setGeometry(QRect(0, 0, 799, 22));
 
     auto fileMenu = menubar->addMenu("File");
-    auto render = fileMenu->addAction("Render Image", [this](){openGLWidget->saveImage("render.png");});
-    render->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_P));
-    auto quit = fileMenu->addAction("Quit",[this](){close();});
-    quit->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_Q));
+
+    fileMenu->addAction( QIcon("resource/render.svg"),
+                         "Render Image",
+                         [this](){openGLWidget->saveImage();},
+                         QKeySequence(Qt::CTRL | Qt::Key_P) );
+
+    fileMenu->addAction( QIcon("resource/quit.svg"),
+                         "Quit",
+                         [this](){close();},
+                         QKeySequence(Qt::CTRL | Qt::Key_Q) );
 
     auto viewMenu = menubar->addMenu("View");
-    auto grids = viewMenu->addAction("Show Grid", [this](bool flag){openGLWidget->showGrid(flag); openGLWidget->update();});
-    grids->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_G));
+    auto grids = viewMenu->addAction( "Show Grid",
+                                      [this](bool flag){openGLWidget->showGrid(flag); openGLWidget->update();},
+                                      QKeySequence(Qt::CTRL | Qt::Key_G) );
     grids->setCheckable(true);
     grids->setChecked(true);
-    viewMenu->addAction( QIcon("/home/orion/code/qtfractals/resource/reset.svg"),
+
+    viewMenu->addAction( QIcon("resource/reset.svg"),
                          "Reset Bounds",
                          [this](){openGLWidget->resetBounds(); openGLWidget->update();},
                          QKeySequence(Qt::CTRL | Qt::Key_R) );

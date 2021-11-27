@@ -64,3 +64,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
 else()
     target_link_libraries(fractals PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 endif()
+
+add_custom_command(TARGET fractals POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${CMAKE_SOURCE_DIR}/resource $<TARGET_FILE_DIR:fractals>/resource)

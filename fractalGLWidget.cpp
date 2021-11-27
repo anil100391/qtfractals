@@ -8,6 +8,7 @@
 #include <QWheelEvent>
 #include <QMouseEvent>
 
+#include <QFileDialog>
 #include <QOpenGLFunctions>
 #include <QOpenGLVertexArrayObject>
 
@@ -44,11 +45,19 @@ void FractalGLWidget::resetBounds()
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool FractalGLWidget::saveImage(const QString &file)
+bool FractalGLWidget::saveImage()
 {
     QImage img = grabFramebuffer();
-    img.save(file);
-    m_mainWindow->postMessage(file + " saved");
+
+    QString fileName = QFileDialog::getSaveFileName( this, tr("Save Image As"),
+                                                     "render.png",
+                                                     tr("Images (*.png *.xpm *.jpg)") );
+
+    if (fileName.isEmpty())
+        return false;
+
+    img.save(fileName);
+    m_mainWindow->postMessage(fileName + " saved");
     return true;
 }
 
