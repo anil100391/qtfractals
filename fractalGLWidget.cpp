@@ -21,18 +21,31 @@ FractalGLWidget::FractalGLWidget(QWidget *parent)
       m_indexBuffer(QOpenGLBuffer::IndexBuffer)
 {
     QSurfaceFormat format;
+#if ANDROID
+    format.setVersion(3, 1);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setRenderableType(QSurfaceFormat::OpenGLES);
+    setFormat(format);
+
+    setAttribute(Qt::WA_AcceptTouchEvents);
+#else
     format.setVersion(4, 2);
     format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setRenderableType(QSurfaceFormat::OpenGL);
     setFormat(format);
     setMouseTracking(true);
+#endif
 }
 
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 FractalGLWidget::~FractalGLWidget()
 {
-    m_vao->release();
-    delete m_vao;
+    if ( m_vao )
+    {
+        m_vao->release();
+        delete m_vao;
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -59,6 +72,19 @@ bool FractalGLWidget::saveImage()
     img.save(fileName);
     m_mainWindow->postMessage(fileName + " saved");
     return true;
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+bool FractalGLWidget::event(QEvent *evt)
+{
+    if (evt->type() == QEvent::TouchBegin  ||
+        evt->type() == QEvent::TouchEnd    ||
+        evt->type() == QEvent::TouchUpdate ||
+        evt->type() == QEvent::TouchCancel )
+        return touchEvent(static_cast<QTouchEvent*>(evt));
+
+    return QOpenGLWidget::event(evt);
 }
 
 // -----------------------------------------------------------------------------
@@ -90,6 +116,9 @@ void FractalGLWidget::mouseMoveEvent(QMouseEvent *event)
         m_center = m_grabbedForPan + toCenter;
     }
 
+    m_c0.setX(pos.x());
+    m_c0.setY(pos.y());
+
     auto c = coord(pos.x(), height() - pos.y());
     m_mainWindow->postMessage(QString::number(c.x()) +", " + QString::number(c.y()));
     update();
@@ -109,7 +138,8 @@ void FractalGLWidget::mousePressEvent(QMouseEvent *event)
 void FractalGLWidget::initializeGL()
 {
     // Set up the rendering context, load shaders and other resources, etc.:
-    QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
+    auto cxt = QOpenGLContext::currentContext();
+    QOpenGLFunctions *f = cxt->functions();
     f->glEnable(GL_BLEND);
     f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -135,12 +165,24 @@ void FractalGLWidget::initializeGL()
     m_shaderProgram.bind();
     m_shaderProgram.enableAttributeArray(0);
     m_shaderProgram.setAttributeBuffer( 0, GL_FLOAT, 0, 2 );
-    if ( !m_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Vertex, "vert.shader") )
+
+    #include "vert.shader"
+    std::string versionStr;
+#if ANDROID
+    versionStr = "#version 300 es\n";
+#else
+    versionStr = "#version 330 core\n";
+#endif
+    std::string vertexShader = versionStr + vshader;
+
+    if ( !m_shaderProgram.addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShader.c_str()) )
     {
         QString log = m_shaderProgram.log();
     }
 
-    if ( !m_shaderProgram.addShaderFromSourceFile(QOpenGLShader::Fragment, "frag.shader") )
+    #include "frag.shader"
+    std::string fragShader = versionStr + fshader;
+    if ( !m_shaderProgram.addShaderFromSourceCode(QOpenGLShader::Fragment, fragShader.c_str()) )
     {
         QString log = m_shaderProgram.log();
     }
@@ -205,8 +247,9 @@ QVector2D FractalGLWidget::coord(int x, int y) const
 // -----------------------------------------------------------------------------
 void FractalGLWidget::paintGL()
 {
+    auto cxt = QOpenGLContext::currentContext();
     // Draw the scene:
-    QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
+    QOpenGLFunctions *f = cxt->functions();
     f->glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     f->glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     // Bind shader program, textures for first set of objects
@@ -215,10 +258,9 @@ void FractalGLWidget::paintGL()
     QMatrix4x4 mvp;
     mvp.ortho(0.0f, width(), 0.0f, height(), -1.0f, 1.0f);
 
-    QPoint cpos = QCursor::pos();
     m_shaderProgram.setUniformValue("u_Color", 1.0f, 1.0f, 0.0f, 1.0f);
     m_shaderProgram.setUniformValue("u_MVP", mvp);
-    m_shaderProgram.setUniformValue("u_C0", -3 + (4.0 * cpos.x())/width(), -1.5 + (3.0 * cpos.y())/height());
+    m_shaderProgram.setUniformValue("u_C0", -3 + (4.0 * m_c0.x())/width(), -1.5 + (3.0 * m_c0.y())/height());
     m_shaderProgram.setUniformValue("u_AspectRatio", 1.0f * width() / height());
     m_shaderProgram.setUniformValue("u_SpanY", m_spanY);
     m_shaderProgram.setUniformValue("u_Center", m_center);
@@ -229,6 +271,61 @@ void FractalGLWidget::paintGL()
     // Switch to the vertex data for first object and draw it
     m_vao->bind();
     f->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+}
+
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+bool FractalGLWidget::touchEvent(QTouchEvent *evt)
+{
+    if (evt->type() == QTouchEvent::TouchBegin)
+    {
+        const auto& evtPoints = evt->points();
+        if ( evtPoints.size() == 1)
+        {
+            const auto& pos = evtPoints.first().position();
+            m_grabbedForPan = coord(pos.x(), height() - pos.y());
+            m_c0.setX(pos.x());
+            m_c0.setY(pos.y());
+            auto c = coord(pos.x(), height() - pos.y());
+            m_mainWindow->postMessage(QString::number(c.x()) +", " + QString::number(c.y()));
+        }
+
+        evt->accept();
+    }
+    else  if (evt->type() == QTouchEvent::TouchUpdate)
+    {
+        const auto& evtPoints = evt->points();
+        if ( evtPoints.size() == 1)
+        {
+            // panning
+            const auto& pos = evtPoints.first().position();
+            float xposRel = (1.0 * pos.x()) / width();
+            float yposRel = (1.0 * (height() - pos.y())) / height();
+
+            float spanX = (m_spanY * width()) / height();
+            QVector2D toCenter((0.5 - xposRel) * spanX, (0.5 - yposRel) * m_spanY);
+
+            m_center = m_grabbedForPan + toCenter;
+        }
+        else if (evtPoints.size() == 2)
+        {
+            m_spanY -= 0.01f;
+        }
+        else if (evtPoints.size() == 3)
+        {
+            m_spanY += 0.01f;
+        }
+    }
+    else  if (evt->type() == QTouchEvent::TouchEnd)
+    {
+    }
+    else  if (evt->type() == QTouchEvent::TouchCancel)
+    {
+    }
+
+    update();
+
+    return true;
 }
 
 // -----------------------------------------------------------------------------

@@ -9,6 +9,7 @@
 // -----------------------------------------------------------------------------
 class MainWindow;
 class QMouseEvent;
+class QTouchEvent;
 class QOpenGLVertexArrayObject;
 
 // -----------------------------------------------------------------------------
@@ -27,6 +28,7 @@ public:
 
 protected:
 
+    virtual bool event(QEvent *evt) override;
     virtual void wheelEvent(QWheelEvent *event) override;
     virtual void mouseMoveEvent(QMouseEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event) override;
@@ -37,16 +39,19 @@ protected:
 
 private:
 
+    bool touchEvent(QTouchEvent *evt);
+
     void zoom(bool inverted);
     void allocatePositionBuffer(int w, int h);
     QVector2D minCoord() const;
     QVector2D maxCoord() const;
     QVector2D coord(int x, int y) const;
 
-    int                       m_mode = 1;
+    int                       m_mode = 0;
     bool                      m_showGrid = true;
     QVector2D                 m_center = {0.0f, 0.0f};
     QVector2D                 m_grabbedForPan;
+    QVector2D                 m_c0{0.0f, 0.0f};
     float                     m_spanY = 3.0f;
 
     MainWindow               *m_mainWindow = nullptr;

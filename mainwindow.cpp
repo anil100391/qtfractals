@@ -10,6 +10,10 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setupUI();
+
+#if ANDROID
+    setAttribute(Qt::WA_AcceptTouchEvents);
+#endif
 }
 
 // -----------------------------------------------------------------------------

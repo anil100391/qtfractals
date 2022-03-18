@@ -1,266 +1,262 @@
-#version 330 core
+std::string fshader =
 
-layout(location = 0) out vec4 color;
-uniform vec2 u_C0;
-uniform float u_AspectRatio = 1.0; // spax / spany
-uniform float u_SpanY = 3.0;
-uniform vec2  u_Center;
-uniform int   u_Mode = 0;
-uniform int u_Width;
-uniform int u_Height;
-uniform int u_ShowGrid;
-// in vec2 v_texCoord;
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-struct complex
-{
-    float x, y;
-};
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-float absSq(complex z)
-{
-    return z.x * z.x + z.y * z.y;
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-complex conjugate(complex z)
-{
-    complex zbar = z;
-    zbar.y *= -1.0;
-    return zbar;
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-complex mult(complex a, complex b)
-{
-    complex res;
-    res.x = a.x * b.x - a.y * b.y;
-    res.y = a.x * b.y + b.x * a.y;
-    return res;
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-complex exponent(complex z, int n)
-{
-    if ( n == 1 )
-        return z;
-
-    complex zn = z;
-    int ii = 1;
-    for ( ii = 1; ii < n; ++ii )
-    {
-        zn = mult(zn, z);
-    }
-
-    return zn;
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-vec2 getFragmentCoordinate(vec2 texcoord)
-{
-    float spanX = u_AspectRatio * u_SpanY;
-    float spanY = u_SpanY;
-    vec2 minCorner = u_Center - vec2(0.5 * spanX, 0.5 * spanY);
-
-    // texcoord between 0 to 1
-    float x = minCorner.x + texcoord.x * spanX;
-    float y = minCorner.y + texcoord.y * spanY;
-    return vec2(x, y);
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-vec4 juliaShader(vec2 texcoord)
-{
-    int iter = 100;
-
-    vec2 z = getFragmentCoordinate(texcoord);
-
-    int i = 0;
-
-    for ( i = 0; i < iter; ++i )
-    {
-        float x = (z.x * z.x - z.y * z.y) + u_C0.x;
-        float y = (z.y * z.x + z.x * z.y) + u_C0.y;
-
-        if((x * x + y * y) > 4.0) break;
-        z.x = x;
-        z.y = y;
-    }
-
-    vec4 r = vec4(0.5, 0.0, 0.0, 1.0);
-    vec4 g = vec4(0.0, 1.0, 0.0, 1.0);
-    vec4 b = vec4(0.0, 0.0, 0.0, 1.0);
-
-    float normi = float(i)/100.0;
-    normi = 2.0 * normi - 1.0;
-    normi = normi * normi;
-    float mixfac = exp(-4.0*normi*normi);
-
-    return g * mixfac + (1.0 - mixfac) * b;
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-vec4 mandelbrotShader(vec2 texcoord)
-{
-    int iter = 100;
-
-    vec2 z = vec2(0.0);
-    vec2 c0 = getFragmentCoordinate(texcoord);
-
-    int i = 0;
-
-    for ( i = 0; i < iter; ++i )
-    {
-        float x = (z.x * z.x - z.y * z.y) + c0.x;
-        float y = (z.y * z.x + z.x * z.y) + c0.y;
-
-        if((x * x + y * y) > 4.0) break;
-        z.x = x;
-        z.y = y;
-    }
-
-    vec4 r = vec4(0.5, 0.0, 0.0, 1.0);
-    vec4 g = vec4(0.0, 1.0, 0.0, 1.0);
-    vec4 b = vec4(0.0, 0.0, 0.0, 1.0);
-
-    float normi = float(i)/100.0;
-    normi = 2.0 * normi - 1.0;
-    normi = normi * normi;
-    float mixfac = exp(-4.0*normi*normi);
-
-    // return vec4(1.0, 0.0, 0.0, 1.0);
-    return g * mixfac + (1.0 - mixfac) * b;
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-vec4 newtonShader(vec2 texcoord)
-{
-    int iter = 100;
-
-    vec2 z = getFragmentCoordinate(texcoord);
-
-    // z_n+1 -> z_n - f(z_n) / f'(z_n)
-    // f: z^3 -2z + 2
-    // f': 3z^2 - 2
-
-    vec2 roots[3];
-    roots[0] = vec2(-1.76929235f, 0.0);
-    roots[1] = vec2(0.88464618, 0.58974281);
-    roots[2] = vec2(0.88464618, -0.58974281);
-
-    float tol = 0.00001;
-
-    int i = 0;
-
-    for ( i = 0; i < iter; ++i )
-    {
-        complex zn;
-        zn.x = z.x;
-        zn.y = z.y;
-
-        complex fz = exponent(zn, 3);
-        fz.x += 2.0;
-        fz.x -= 2*zn.x;
-        fz.y -= 2*zn.y;
-
-        complex fprimez = exponent(zn,2);
-        fprimez.x *= 3.0;
-        fprimez.x -= 2.0;
-        fprimez.y *= 3.0;
-
-        complex fzbyfprimez = mult(fz, conjugate(fprimez));
-        float len = absSq(fprimez);
-        fzbyfprimez.x /= len;
-        fzbyfprimez.y /= len;
-
-        // apply newton's iteration
-        z.x = z.x - fzbyfprimez.x;
-        z.y = z.y - fzbyfprimez.y;
-
-        int j;
-        int foundroot = 0;
-        for ( j = 0; j < 3; ++j)
-        {
-            if ( length(z-roots[j]) < tol )
-            {
-                foundroot = 1;
-                break;
-            }
-        }
-
-        if ( foundroot == 1 )
-            break;
-    }
-
-    vec4 r = vec4(1.0, 0.5, 0.0, 1.0);
-    vec4 g = vec4(0.0, 1.0, 0.0, 1.0);
-    vec4 b = vec4(0.5, 0.7, 0.1, 1.0);
-
-    float a0 = 0.233;
-    float a1 = 1.609;
-    float normi = float(i)/(1.0 * iter);
-    normi = pow(normi, a1);
-    normi = 2.0 * normi - 1.0;
-    float mixfac = a0 - exp(-2.0f * normi * normi);
-
-    vec4 colors[3];
-    colors[0] = r;
-    colors[1] = g;
-    colors[2] = b;
-
-    vec2 fragcoord = getFragmentCoordinate(texcoord);
-
-    for ( int ii = 0; ii < 3; ++ii )
-    {
-        vec2 diff = z - roots[ii];
-        if ( abs(diff.x) < tol && abs(diff.y) < tol )
-        {
-            return colors[ii] * mixfac * 10.0;
-        }
-    }
-
-    return vec4(vec3(0.0), 1.0) * vec4(vec3(mixfac), 1.0);
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-float plot(float edge, float x)
-{
-    float delta = u_SpanY * 0.01 / 3.0;
-    return smoothstep(edge-delta, edge, x) - smoothstep(edge, edge+delta, x);
-}
-
-// -----------------------------------------------------------------------------
-vec4 gridlinesShader(vec2 texcoord)
-{
-    vec2 fragcoord = getFragmentCoordinate(texcoord);
-    float e = round(fragcoord.x);
-    float f = round(fragcoord.y);
-    return vec4(vec2(clamp(max(plot(e, fragcoord.x), plot(f, fragcoord.y)), 0.0, 1.0)), 0.0, 1.0);
-}
-
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
-void main()
-{
-    vec2 v_texCoord = vec2((1.0 * gl_FragCoord.x)/u_Width, (1.0 * gl_FragCoord.y)/u_Height);
-    if ( u_Mode == 0 )
-        color = juliaShader(v_texCoord);
-    else if ( u_Mode == 1 )
-        color = mandelbrotShader(v_texCoord);
-    else
-        color = newtonShader(v_texCoord);
-
-    if ( u_ShowGrid != 0 )
-        color = max(0.2 * gridlinesShader(v_texCoord), 0.9 * color);
-}
+"layout(location = 0) out vec4 color;\n"
+"uniform vec2 u_C0;\n"
+"uniform float u_AspectRatio; // spax / spany\n"
+"uniform float u_SpanY;\n"
+"uniform vec2  u_Center;\n"
+"uniform int   u_Mode;\n"
+"uniform int u_Width;\n"
+"uniform int u_Height;\n"
+"uniform int u_ShowGrid;\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"struct complex\n"
+"{\n"
+"    float x, y;\n"
+"};\n"
+"\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"float absSq(complex z)\n"
+"{\n"
+"    return z.x * z.x + z.y * z.y;\n"
+"}\n"
+"\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"complex conjugate(complex z)\n"
+"{\n"
+"    complex zbar = z;\n"
+"    zbar.y *= -1.0;\n"
+"    return zbar;\n"
+"}\n"
+"\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"complex mult(complex a, complex b)\n"
+"{\n"
+"    complex res;\n"
+"    res.x = a.x * b.x - a.y * b.y;\n"
+"    res.y = a.x * b.y + b.x * a.y;\n"
+"    return res;\n"
+"}\n"
+"\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"complex exponent(complex z, int n)\n"
+"{\n"
+"    if ( n == 1 )\n"
+"        return z;\n"
+"\n"
+"    complex zn = z;\n"
+"    int ii = 1;\n"
+"    for ( ii = 1; ii < n; ++ii )\n"
+"    {\n"
+"        zn = mult(zn, z);\n"
+"    }\n"
+"\n"
+"    return zn;\n"
+"}\n"
+"\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"vec2 getFragmentCoordinate(vec2 texcoord)\n"
+"{\n"
+"    float spanX = u_AspectRatio * u_SpanY;\n"
+"    float spanY = u_SpanY;\n"
+"    vec2 minCorner = u_Center - vec2(0.5 * spanX, 0.5 * spanY);\n"
+"\n"
+"    // texcoord between 0 to 1\n"
+"    float x = minCorner.x + texcoord.x * spanX;\n"
+"    float y = minCorner.y + texcoord.y * spanY;\n"
+"    return vec2(x, y);\n"
+"}\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"vec4 juliaShader(vec2 texcoord)\n"
+"{\n"
+"    int iter = 100;\n"
+"\n"
+"    vec2 z = getFragmentCoordinate(texcoord);\n"
+"\n"
+"    int i = 0;\n"
+"\n"
+"    for ( i = 0; i < iter; ++i )\n"
+"    {\n"
+"        float x = (z.x * z.x - z.y * z.y) + u_C0.x;\n"
+"        float y = (z.y * z.x + z.x * z.y) + u_C0.y;\n"
+"\n"
+"        if((x * x + y * y) > 4.0) break;\n"
+"        z.x = x;\n"
+"        z.y = y;\n"
+"    }\n"
+"\n"
+"    vec4 r = vec4(0.5, 0.0, 0.0, 1.0);\n"
+"    vec4 g = vec4(0.0, 1.0, 0.0, 1.0);\n"
+"    vec4 b = vec4(0.0, 0.0, 0.0, 1.0);\n"
+"\n"
+"    float normi = float(i)/100.0;\n"
+"    normi = 2.0 * normi - 1.0;\n"
+"    normi = normi * normi;\n"
+"    float mixfac = exp(-4.0*normi*normi);\n"
+"\n"
+"    return g * mixfac + (1.0 - mixfac) * b;\n"
+"}\n"
+"\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"vec4 mandelbrotShader(vec2 texcoord)\n"
+"{\n"
+"    int iter = 100;\n"
+"\n"
+"    vec2 z = vec2(0.0);\n"
+"    vec2 c0 = getFragmentCoordinate(texcoord);\n"
+"\n"
+"    int i = 0;\n"
+"\n"
+"    for ( i = 0; i < iter; ++i )\n"
+"    {\n"
+"        float x = (z.x * z.x - z.y * z.y) + c0.x;\n"
+"        float y = (z.y * z.x + z.x * z.y) + c0.y;\n"
+"\n"
+"        if((x * x + y * y) > 4.0) break;\n"
+"        z.x = x;\n"
+"        z.y = y;\n"
+"    }\n"
+"\n"
+"    vec4 r = vec4(0.5, 0.0, 0.0, 1.0);\n"
+"    vec4 g = vec4(0.0, 1.0, 0.0, 1.0);\n"
+"    vec4 b = vec4(0.0, 0.0, 0.0, 1.0);\n"
+"\n"
+"    float normi = float(i)/100.0;\n"
+"    normi = 2.0 * normi - 1.0;\n"
+"    normi = normi * normi;\n"
+"    float mixfac = exp(-4.0*normi*normi);\n"
+"\n"
+"    // return vec4(1.0, 0.0, 0.0, 1.0);\n"
+"    return g * mixfac + (1.0 - mixfac) * b;\n"
+"}\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"vec4 newtonShader(vec2 texcoord)\n"
+"{\n"
+"    int iter = 100;\n"
+"\n"
+"    vec2 z = getFragmentCoordinate(texcoord);\n"
+"\n"
+"    // z_n+1 -> z_n - f(z_n) / f'(z_n)\n"
+"    // f: z^3 -2z + 2\n"
+"    // f': 3z^2 - 2\n"
+"\n"
+"    vec2 roots[3];\n"
+"    roots[0] = vec2(-1.76929235f, 0.0);\n"
+"    roots[1] = vec2(0.88464618, 0.58974281);\n"
+"    roots[2] = vec2(0.88464618, -0.58974281);\n"
+"\n"
+"    float tol = 0.00001;\n"
+"\n"
+"    int i = 0;\n"
+"\n"
+"    for ( i = 0; i < iter; ++i )\n"
+"    {\n"
+"        complex zn;\n"
+"        zn.x = z.x;\n"
+"        zn.y = z.y;\n"
+"\n"
+"        complex fz = exponent(zn, 3);\n"
+"        fz.x += 2.0;\n"
+"        fz.x -= 2.0*zn.x;\n"
+"        fz.y -= 2.0*zn.y;\n"
+"\n"
+"        complex fprimez = exponent(zn,2);\n"
+"        fprimez.x *= 3.0;\n"
+"        fprimez.x -= 2.0;\n"
+"        fprimez.y *= 3.0;\n"
+"\n"
+"        complex fzbyfprimez = mult(fz, conjugate(fprimez));\n"
+"        float len = absSq(fprimez);\n"
+"        fzbyfprimez.x /= len;\n"
+"        fzbyfprimez.y /= len;\n"
+"\n"
+"        // apply newton's iteration\n"
+"        z.x = z.x - fzbyfprimez.x;\n"
+"        z.y = z.y - fzbyfprimez.y;\n"
+"\n"
+"        int j;\n"
+"        int foundroot = 0;\n"
+"        for ( j = 0; j < 3; ++j)\n"
+"        {\n"
+"            if ( length(z-roots[j]) < tol )\n"
+"            {\n"
+"                foundroot = 1;\n"
+"                break;\n"
+"            }\n"
+"        }\n"
+"\n"
+"        if ( foundroot == 1 )\n"
+"            break;\n"
+"    }\n"
+"\n"
+"    vec4 r = vec4(1.0, 0.5, 0.0, 1.0);\n"
+"    vec4 g = vec4(0.0, 1.0, 0.0, 1.0);\n"
+"    vec4 b = vec4(0.5, 0.7, 0.1, 1.0);\n"
+"\n"
+"    float a0 = 0.233;\n"
+"    float a1 = 1.609;\n"
+"    float normi = float(i)/(1.0 * float(iter));\n"
+"    normi = pow(normi, a1);\n"
+"    normi = 2.0 * normi - 1.0;\n"
+"    float mixfac = a0 - exp(-2.0f * normi * normi);\n"
+"\n"
+"    vec4 colors[3];\n"
+"    colors[0] = r;\n"
+"    colors[1] = g;\n"
+"    colors[2] = b;\n"
+"\n"
+"    vec2 fragcoord = getFragmentCoordinate(texcoord);\n"
+"\n"
+"    for ( int ii = 0; ii < 3; ++ii )\n"
+"    {\n"
+"        vec2 diff = z - roots[ii];\n"
+"        if ( abs(diff.x) < tol && abs(diff.y) < tol )\n"
+"        {\n"
+"            return colors[ii] * mixfac * 10.0;\n"
+"        }\n"
+"    }\n"
+"\n"
+"    return vec4(vec3(0.0), 1.0) * vec4(vec3(mixfac), 1.0);\n"
+"}\n"
+"\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"float plot(float edge, float x)\n"
+"{\n"
+"    float delta = u_SpanY * 0.01 / 3.0;\n"
+"    return smoothstep(edge-delta, edge, x) - smoothstep(edge, edge+delta, x);\n"
+"}\n"
+"\n"
+"// -----------------------------------------------------------------------------\n"
+"vec4 gridlinesShader(vec2 texcoord)\n"
+"{\n"
+"    vec2 fragcoord = getFragmentCoordinate(texcoord);\n"
+"    float e = round(fragcoord.x);\n"
+"    float f = round(fragcoord.y);\n"
+"    return vec4(vec2(clamp(max(plot(e, fragcoord.x), plot(f, fragcoord.y)), 0.0, 1.0)), 0.0, 1.0);\n"
+"}\n"
+"\n"
+"// -----------------------------------------------------------------------------\n"
+"// -----------------------------------------------------------------------------\n"
+"void main()\n"
+"{\n"
+"    vec2 v_texCoord = vec2((1.0 * gl_FragCoord.x)/float(u_Width), (1.0 * gl_FragCoord.y)/float(u_Height));\n"
+"    if ( u_Mode == 0 )\n"
+"        color = juliaShader(v_texCoord);\n"
+"    else if ( u_Mode == 1 )\n"
+"        color = mandelbrotShader(v_texCoord);\n"
+"    else\n"
+"        color = newtonShader(v_texCoord);\n"
+"\n"
+"    if ( u_ShowGrid != 0 )\n"
+"        color = max(0.2 * gridlinesShader(v_texCoord), 0.9 * color);\n"
+"}\n";
