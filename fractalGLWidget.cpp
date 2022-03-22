@@ -279,10 +279,18 @@ bool FractalGLWidget::touchEvent(QTouchEvent *evt)
 {
     if (evt->type() == QTouchEvent::TouchBegin)
     {
+#if QT_VERSION_MAJOR < 6
+        const auto& evtPoints = evt->touchPoints();
+#else
         const auto& evtPoints = evt->points();
+#endif
         if ( evtPoints.size() == 1)
         {
+#if QT_VERSION_MAJOR < 6
+            const auto& pos = evtPoints.first().pos();
+#else
             const auto& pos = evtPoints.first().position();
+#endif
             m_grabbedForPan = coord(pos.x(), height() - pos.y());
             m_c0.setX(pos.x());
             m_c0.setY(pos.y());
@@ -294,11 +302,19 @@ bool FractalGLWidget::touchEvent(QTouchEvent *evt)
     }
     else  if (evt->type() == QTouchEvent::TouchUpdate)
     {
+#if QT_VERSION_MAJOR < 6
+        const auto& evtPoints = evt->touchPoints();
+#else
         const auto& evtPoints = evt->points();
+#endif
         if ( evtPoints.size() == 1)
         {
             // panning
+#if QT_VERSION_MAJOR < 6
+            const auto& pos = evtPoints.first().pos();
+#else
             const auto& pos = evtPoints.first().position();
+#endif
             float xposRel = (1.0 * pos.x()) / width();
             float yposRel = (1.0 * (height() - pos.y())) / height();
 
