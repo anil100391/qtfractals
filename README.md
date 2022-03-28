@@ -11,5 +11,5 @@ fractal rendering using qt framework
 * Download qt online installer for open source users from https://qt.io/download
 * Run installer and follow instructions from installation wizard.
 * Login to your Qt account, accept license.
-* Include Desgin Tools, Qt 6.2 for desktop development and Qt 6.2 for mobile development in installation. ![](docs/qtcomps.png)
+* Include Desgin Tools, Qt 6.2 for desktop development and Qt 6.2 for mobile development in installation. ![](docs/qtcomps.PNG)
 ### Configuring QtCreator for Android Development
