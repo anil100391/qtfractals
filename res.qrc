@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resource/quit.svg</file>
+        <file>resource/render.svg</file>
+        <file>resource/reset.svg</file>
+        <file>resource/julia.png</file>
+    </qresource>
+</RCC>

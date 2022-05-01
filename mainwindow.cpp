@@ -46,12 +46,12 @@ void MainWindow::setupUI()
 
     auto fileMenu = menubar->addMenu("File");
 
-    fileMenu->addAction( QIcon("resource/render.svg"),
+    fileMenu->addAction( QIcon(":/resource/render.svg"),
                          "Render Image",
                          [this](){openGLWidget->saveImage();},
                          QKeySequence(Qt::CTRL | Qt::Key_P) );
 
-    fileMenu->addAction( QIcon("resource/quit.svg"),
+    fileMenu->addAction( QIcon(":/resource/quit.svg"),
                          "Quit",
                          [this](){close();},
                          QKeySequence(Qt::CTRL | Qt::Key_Q) );
@@ -63,7 +63,7 @@ void MainWindow::setupUI()
     grids->setCheckable(true);
     grids->setChecked(true);
 
-    viewMenu->addAction( QIcon("resource/reset.svg"),
+    viewMenu->addAction( QIcon(":/resource/reset.svg"),
                          "Reset Bounds",
                          [this](){openGLWidget->resetBounds(); openGLWidget->update();},
                          QKeySequence(Qt::CTRL | Qt::Key_R) );
@@ -78,7 +78,7 @@ void MainWindow::setupUI()
     statusbar->setObjectName(QString::fromUtf8("statusbar"));
     setStatusBar(statusbar);
 
-    setWindowIcon(QIcon("julia.png"));
+    setWindowIcon(QIcon(":/resource/julia.png"));
 }
 
 // -----------------------------------------------------------------------------

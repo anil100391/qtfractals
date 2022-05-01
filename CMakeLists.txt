@@ -29,6 +29,7 @@ else()
     find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 endif()
 
+set(CMAKE_AUTORCC ON)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -36,6 +37,7 @@ set(PROJECT_SOURCES
         mainwindow.h
         fractalGLWidget.cpp
         fractalGLWidget.h
+        res.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -54,17 +56,8 @@ else()
     endif()
 endif()
 
-# copy shaders to binary directory
-configure_file("vert.shader" "vert.shader" COPYONLY)
-configure_file("frag.shader" "frag.shader" COPYONLY)
-configure_file("julia.png" "julia.png" COPYONLY)
-
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     target_link_libraries(fractals PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::OpenGLWidgets)
 else()
     target_link_libraries(fractals PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 endif()
-
-add_custom_command(TARGET fractals POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy_directory
-                   ${CMAKE_SOURCE_DIR}/resource $<TARGET_FILE_DIR:fractals>/resource)
