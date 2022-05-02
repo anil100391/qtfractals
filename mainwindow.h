@@ -32,6 +32,7 @@ private:
 
     FractalGLWidget *openGLWidget = nullptr;
     QMenuBar        *menubar = nullptr;
+    QToolBar        *toolbar = nullptr;
     QStatusBar      *statusbar = nullptr;
 };
 

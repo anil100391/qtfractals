@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "fractalGLWidget.h"
 #include <QMenuBar>
+#include <QToolBar>
 #include <QStatusBar>
 #include <QVBoxLayout>
 
@@ -14,6 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
 #if ANDROID
     setAttribute(Qt::WA_AcceptTouchEvents);
 #endif
+
+    setWindowState(Qt::WindowMaximized);
 }
 
 // -----------------------------------------------------------------------------
@@ -35,7 +38,7 @@ void MainWindow::setupUI()
 {
     if (objectName().isEmpty())
         setObjectName(QString::fromUtf8("MainWindow"));
-    resize(1200, 800 );
+
     openGLWidget = new FractalGLWidget(this);
     openGLWidget->setObjectName(QString::fromUtf8("openGLWidget"));
     setCentralWidget(openGLWidget);
@@ -74,6 +77,16 @@ void MainWindow::setupUI()
     fracMenu->addAction("Newton", [this](){openGLWidget->setMode(2); openGLWidget->update();});
 
     setMenuBar(menubar);
+
+    // tool bar
+    toolbar = new QToolBar(this);
+    auto gridAction = toolbar->addAction(QIcon(":/resource/grid.svg"),
+                                         QString("Grid State"),
+                                         [this](bool flag){openGLWidget->showGrid(flag); openGLWidget->update();});
+    gridAction->setCheckable(true);
+    gridAction->setChecked(true);
+    addToolBar(toolbar);
+
     statusbar = new QStatusBar(this);
     statusbar->setObjectName(QString::fromUtf8("statusbar"));
     setStatusBar(statusbar);
