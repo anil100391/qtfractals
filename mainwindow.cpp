@@ -85,7 +85,12 @@ void MainWindow::setupUI()
                                          [this](bool flag){openGLWidget->showGrid(flag); openGLWidget->update();});
     gridAction->setCheckable(true);
     gridAction->setChecked(true);
-    addToolBar(toolbar);
+#if ANDROID
+    auto toolBarPosition = Qt::BottomToolBarArea;
+#else
+    auto toolBarPosition = Qt::LeftToolBarArea;
+#endif
+    addToolBar(toolBarPosition, toolbar);
 
     statusbar = new QStatusBar(this);
     statusbar->setObjectName(QString::fromUtf8("statusbar"));
